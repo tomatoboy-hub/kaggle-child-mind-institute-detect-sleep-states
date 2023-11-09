@@ -75,6 +75,8 @@ features:
   # - "minute_cos"
   # - "anglez_sin"
   # - "anglez_cos"
+  - "season_sin"  # 季節の正弦特徴量
+  - "season_cos"  # 季節の余弦特徴量
 
 # optimizer
 optimizer:

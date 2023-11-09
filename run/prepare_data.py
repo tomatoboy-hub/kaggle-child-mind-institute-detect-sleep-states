@@ -48,6 +48,13 @@ def to_coord(x: pl.Expr, max_: int, name: str) -> list[pl.Expr]:
 def deg_to_rad(x: pl.Expr) -> pl.Expr:
     return np.pi / 180 * x
 
+def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
+    day_of_year = series_df["timestamp"].dt.day_of_year()
+    rad = 2 * np.pi * day_of_year / 365
+    return series_df.with_columns([
+        rad.sin().alias("season_sin"),
+        rad.cos().alias("season_cos")
+    ])
 
 def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
     series_df = (
@@ -62,6 +69,10 @@ def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
         )
         .select("series_id", *FEATURE_NAMES)
     )
+
+    series_df = add_seasonal_features(series_df)
+    feature_names = FEATURE_NAMES + ["season_sin", "season_cos"]
+    series_df = series_df.select("series_id", *feature_names)
     return series_df
 
 
