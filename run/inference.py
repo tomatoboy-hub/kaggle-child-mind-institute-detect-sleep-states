@@ -80,7 +80,6 @@ def inference(
         with torch.no_grad():
             with torch.cuda.amp.autocast(enabled=use_amp):
                 x = batch["feature"].to(device)
-                print("xのshape",x.shape)
                 print("i = ",i)
                 
                 output = model.predict(
