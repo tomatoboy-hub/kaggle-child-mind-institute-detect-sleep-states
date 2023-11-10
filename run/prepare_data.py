@@ -74,9 +74,17 @@ def calculate_day_of_year(series_df):
 def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
     day_of_year = calculate_day_of_year(series_df)
     rad = 2 * np.pi * day_of_year / 365
+
+    # `rad` を `polars.Series` として扱う
+    rad_series = pl.Series(rad)
+
+    # sin と cos の計算
+    sin_series = rad_series.sin()
+    cos_series = rad_series.cos()
+
     return series_df.with_columns([
-        rad.sin().alias("season_sin"),
-        rad.cos().alias("season_cos")
+        sin_series.alias("season_sin"),
+        cos_series.alias("season_cos")
     ])
 
 def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
