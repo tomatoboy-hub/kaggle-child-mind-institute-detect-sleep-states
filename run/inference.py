@@ -92,7 +92,6 @@ def inference(
             else:
                 key = batch["key"]
                 preds.append(output.preds.detach().cpu().numpy())
-                print("predssize = ",preds.shape)
                 keys.extend(key)
 
     preds = np.concatenate(preds)
