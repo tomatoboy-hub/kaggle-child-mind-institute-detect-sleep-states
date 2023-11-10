@@ -29,6 +29,8 @@ FEATURE_NAMES = [
     "minute_cos",
     "anglez_sin",
     "anglez_cos",
+    "season_sin",
+    "season_cos",
 ]
 
 ANGLEZ_MEAN = -8.810476
