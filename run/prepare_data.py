@@ -65,7 +65,7 @@ def calculate_day_of_year(series_df):
 
     # 日付オブジェクトを作成して年の日を計算
     day_of_year = date_df.apply(
-        lambda row: datetime.date(row['year'], row['month'], row['day']).timetuple().tm_yday
+        lambda row: datetime.date(row[0], row[1], row[2]).timetuple().tm_yday
     )
 
     return day_of_year
