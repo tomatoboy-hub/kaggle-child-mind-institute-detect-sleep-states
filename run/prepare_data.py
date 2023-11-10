@@ -30,8 +30,6 @@ FEATURE_NAMES = [
     "minute_cos",
     "anglez_sin",
     "anglez_cos",
-    "season_sin",
-    "season_cos",
     "hour_2_sin_2",
     "hour_2_cos_2",
     "month_sin_2",
