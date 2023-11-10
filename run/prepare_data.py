@@ -57,9 +57,11 @@ def calculate_day_of_year(series_df):
     month = series_df["timestamp"].dt.month()
     day = series_df["timestamp"].dt.day()
 
+    date_df = pl.concat([year, month, day], how='horizontal')
+
     # 日付オブジェクトを作成して年の日を計算
-    day_of_year = year.zip_with(month, day).apply(
-        lambda x: datetime.date(x[0], x[1], x[2]).timetuple().tm_yday
+    day_of_year = date_df.apply(
+        lambda row: datetime.date(row[0], row[1], row[2]).timetuple().tm_yday
     )
 
     return day_of_year
