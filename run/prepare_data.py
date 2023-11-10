@@ -59,6 +59,7 @@ def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
     ])
 
 def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
+    series_df = add_seasonal_features(series_df)
     series_df = (
         series_df.with_row_count("step")
         .with_columns(
@@ -71,10 +72,6 @@ def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
         )
         .select("series_id", *FEATURE_NAMES)
     )
-
-    series_df = add_seasonal_features(series_df)
-    feature_names = FEATURE_NAMES + ["season_sin", "season_cos"]
-    series_df = series_df.select("series_id", *feature_names)
     return series_df
 
 
