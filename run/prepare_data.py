@@ -127,6 +127,8 @@ def main(cfg: PrepareDataConfig):
             .collect(streaming=True)
             .sort(by=["series_id", "timestamp"])
         )
+        print(series_df.head(5))
+        print(series_df.columns)
         n_unique = series_df.get_column("series_id").n_unique()
     with trace("Save features"):
         for series_id, this_series_df in tqdm(series_df.group_by("series_id"), total=n_unique):
