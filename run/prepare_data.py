@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+import datetime
 
 import hydra
 import numpy as np
@@ -50,8 +51,22 @@ def to_coord(x: pl.Expr, max_: int, name: str) -> list[pl.Expr]:
 def deg_to_rad(x: pl.Expr) -> pl.Expr:
     return np.pi / 180 * x
 
+def calculate_day_of_year(series_df):
+    # 年、月、日を抽出
+    year = series_df["timestamp"].dt.year()
+    month = series_df["timestamp"].dt.month()
+    day = series_df["timestamp"].dt.day()
+
+    # 日付オブジェクトを作成して年の日を計算
+    day_of_year = year.zip_with(month, day).apply(
+        lambda x: datetime.date(x[0], x[1], x[2]).timetuple().tm_yday
+    )
+
+    return day_of_year
+
+
 def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
-    day_of_year = series_df["timestamp"].dt.day_of_year()
+    day_of_year = calculate_day_of_year(series_df)
     rad = 2 * np.pi * day_of_year / 365
     return series_df.with_columns([
         rad.sin().alias("season_sin"),
