@@ -68,7 +68,7 @@ def calculate_day_of_year(series_df):
         lambda row: datetime.date(row[0], row[1], row[2]).timetuple().tm_yday
     )
 
-    return pl.Series(day_of_year, name="day_of_year")
+    return pl.Series(list(day_of_year), name="day_of_year")
 
 
 def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
