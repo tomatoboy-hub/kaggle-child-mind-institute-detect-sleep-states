@@ -32,10 +32,10 @@ FEATURE_NAMES = [
     "anglez_cos",
     "hour_2_sin_2",
     "hour_2_cos_2",
-    "month_sin_2",
-    "month_cos_2",
-    "minute_sin_2",
-    "minute_cos_2",
+    "month_2_sin_2",
+    "month_2_cos_2",
+    "minute_2_sin_2",
+    "minute_2_cos_2",
 ]
 
 ANGLEZ_MEAN = -8.810476
