@@ -75,10 +75,14 @@ def inference(
 
     preds = []
     keys = []
+    i = 1
     for batch in tqdm(loader, desc="inference"):
         with torch.no_grad():
             with torch.cuda.amp.autocast(enabled=use_amp):
                 x = batch["feature"].to(device)
+                print("xのshape",x.shape)
+                print("i = ",i)
+                
                 output = model.predict(
                     x,
                     org_duration=duration,
@@ -88,6 +92,7 @@ def inference(
             else:
                 key = batch["key"]
                 preds.append(output.preds.detach().cpu().numpy())
+                print("predssize = ",preds.shape)
                 keys.extend(key)
 
     preds = np.concatenate(preds)
