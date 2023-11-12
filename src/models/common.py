@@ -4,10 +4,12 @@ import torch.nn as nn
 
 from src.conf import DecoderConfig, FeatureExtractorConfig, InferenceConfig, TrainConfig
 from src.models.base import BaseModel
+from src.models.centernet import CenterNet
 from src.models.decoder.lstmdecoder import LSTMDecoder
 from src.models.decoder.mlpdecoder import MLPDecoder
 from src.models.decoder.transformerdecoder import TransformerDecoder
 from src.models.decoder.unet1ddecoder import UNet1DDecoder
+from src.models.detr2D import DETR2DCNN
 from src.models.feature_extractor.cnn import CNNSpectrogram
 from src.models.feature_extractor.lstm import LSTMFeatureExtractor
 from src.models.feature_extractor.panns import PANNsFeatureExtractor
@@ -91,14 +93,15 @@ def get_model(
             cfg.feature_extractor, feature_dim, num_timesteps
         )
         decoder = get_decoder(cfg.decoder, feature_extractor.height, n_classes, num_timesteps)
+        if test:
+            cfg.model.params["encoder_weights"] = None
         model = Spec2DCNN(
             feature_extractor=feature_extractor,
             decoder=decoder,
             in_channels=feature_extractor.out_chans,
             mixup_alpha=cfg.aug.mixup_alpha,
             cutmix_alpha=cfg.aug.cutmix_alpha,
-            encoder_weights=cfg.model.params["encoder_weights"] if not test else None,
-            encoder_name=cfg.model.params["encoder_name"],
+            **cfg.model.params,
         )
     elif cfg.model.name == "Spec1D":
         feature_extractor = get_feature_extractor(
@@ -110,6 +113,38 @@ def get_model(
             decoder=decoder,
             mixup_alpha=cfg.aug.mixup_alpha,
             cutmix_alpha=cfg.aug.cutmix_alpha,
+        )
+    elif cfg.model.name == "DETR2DCNN":
+        feature_extractor = get_feature_extractor(
+            cfg.feature_extractor, feature_dim, num_timesteps
+        )
+        decoder = get_decoder(
+            cfg.decoder, feature_extractor.height, cfg.model.params["hidden_dim"], num_timesteps
+        )
+        if test:
+            cfg.model.params["encoder_weights"] = None
+        model = DETR2DCNN(
+            feature_extractor=feature_extractor,
+            decoder=decoder,
+            in_channels=feature_extractor.out_chans,
+            mixup_alpha=cfg.aug.mixup_alpha,
+            cutmix_alpha=cfg.aug.cutmix_alpha,
+            **cfg.model.params,
+        )
+    elif cfg.model.name == "CenterNet":
+        feature_extractor = get_feature_extractor(
+            cfg.feature_extractor, feature_dim, num_timesteps
+        )
+        decoder = get_decoder(cfg.decoder, feature_extractor.height, 6, num_timesteps)
+        if test:
+            cfg.model.params["encoder_weights"] = None
+        model = CenterNet(
+            feature_extractor=feature_extractor,
+            decoder=decoder,
+            in_channels=feature_extractor.out_chans,
+            mixup_alpha=cfg.aug.mixup_alpha,
+            cutmix_alpha=cfg.aug.cutmix_alpha,
+            **cfg.model.params,
         )
     else:
         raise ValueError(f"Invalid model name: {cfg.model.name}")

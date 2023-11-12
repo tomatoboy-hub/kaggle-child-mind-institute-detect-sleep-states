@@ -8,36 +8,36 @@ from torch.utils.data import Dataset
 from torchvision.transforms.functional import resize
 
 from src.conf import InferenceConfig, TrainConfig
-from src.utils.common import gaussian_label, nearest_valid_size, negative_sampling, random_crop
-from src.utils.common import pad_if_needed
+from src.utils.common import nearest_valid_size, negative_sampling, pad_if_needed, random_crop
+
 
 ###################
 # Label
 ###################
-def get_seg_label(
-    this_event_df: pd.DataFrame, num_frames: int, duration: int, start: int, end: int
+def get_detr_label(
+    this_event_df: pd.DataFrame,
+    duration: int,
+    start: int,
+    end: int,
+    max_det: int = 20,
 ) -> np.ndarray:
     # # (start, end)の範囲と(onset, wakeup)の範囲が重なるものを取得
     this_event_df = this_event_df.query("@start <= wakeup & onset <= @end")
 
-    label = np.zeros((num_frames, 3))
-    # onset, wakeup, sleepのラベルを作成
-    for onset, wakeup in this_event_df[["onset", "wakeup"]].to_numpy():
-        onset = int((onset - start) / duration * num_frames)
-        wakeup = int((wakeup - start) / duration * num_frames)
-        if onset >= 0 and onset < num_frames:
-            label[onset, 1] = 1
-        if wakeup < num_frames and wakeup >= 0:
-            label[wakeup, 2] = 1
+    label = np.zeros((max_det, 3))  # (num_frames, [objectness, onset, wakeup])
+    # 1dbboxのラベルを作成
+    for i, (onset, wakeup) in enumerate(this_event_df[["onset", "wakeup"]].to_numpy()):
+        onset = (onset - start) / duration  # 相対時間に変換
+        wakeup = (wakeup - start) / duration  # 相対時間に変換
+        label[i] = np.array([1, onset, wakeup])
 
-        onset = max(0, onset)
-        wakeup = min(num_frames, wakeup)
-        label[onset:wakeup, 0] = 1  # sleep
+    # 0 <= onset, wakeup <= 1になるようにclip
+    label[:, 1:] = np.clip(label[:, 1:], 0, 1)
 
     return label
 
 
-class SegTrainDataset(Dataset):
+class DETRTrainDataset(Dataset):
     def __init__(
         self,
         cfg: TrainConfig,
@@ -45,6 +45,7 @@ class SegTrainDataset(Dataset):
         event_df: pl.DataFrame,
     ):
         self.cfg = cfg
+        self.max_det = cfg.model.params["max_det"]
         self.event_df: pd.DataFrame = (
             event_df.pivot(index=["series_id", "night"], columns="event", values="step")
             .drop_nulls()
@@ -90,20 +91,17 @@ class SegTrainDataset(Dataset):
         ).squeeze(0)
 
         # from hard label to gaussian label
-        num_frames = self.upsampled_num_frames // self.cfg.downsample_rate
-        label = get_seg_label(this_event_df, num_frames, self.cfg.duration, start, end)
-        label[:, [1, 2]] = gaussian_label(
-            label[:, [1, 2]], offset=self.cfg.dataset.offset, sigma=self.cfg.dataset.sigma
-        )
+        self.upsampled_num_frames // self.cfg.downsample_rate
+        label = get_detr_label(this_event_df, self.cfg.duration, start, end, max_det=self.max_det)
 
         return {
             "series_id": series_id,
             "feature": feature,  # (num_features, upsampled_num_frames)
-            "label": torch.FloatTensor(label),  # (pred_length, num_classes)
+            "label": torch.FloatTensor(label),  # (max_det, [objectness, onset, wakeup])
         }
 
 
-class SegValidDataset(Dataset):
+class DETRValidDataset(Dataset):
     def __init__(
         self,
         cfg: TrainConfig,
@@ -111,6 +109,7 @@ class SegValidDataset(Dataset):
         event_df: pl.DataFrame,
     ):
         self.cfg = cfg
+        self.max_det = cfg.model.params["max_det"]
         self.chunk_features = chunk_features
         self.keys = list(chunk_features.keys())
         self.event_df = (
@@ -140,14 +139,9 @@ class SegValidDataset(Dataset):
         chunk_id = int(chunk_id)
         start = chunk_id * self.cfg.duration
         end = start + self.cfg.duration
-        num_frames = self.upsampled_num_frames // self.cfg.downsample_rate
-        label = get_seg_label(
-            self.event_df.query("series_id == @series_id").reset_index(drop=True),
-            num_frames,
-            self.cfg.duration,
-            start,
-            end,
-        )
+        self.upsampled_num_frames // self.cfg.downsample_rate
+        this_event_df = self.event_df.query("series_id == @series_id").reset_index(drop=True)
+        label = get_detr_label(this_event_df, self.cfg.duration, start, end, max_det=self.max_det)
         return {
             "key": key,
             "feature": feature,  # (num_features, duration)
@@ -155,7 +149,7 @@ class SegValidDataset(Dataset):
         }
 
 
-class SegTestDataset(Dataset):
+class DETRTestDataset(Dataset):
     def __init__(
         self,
         cfg: InferenceConfig,
