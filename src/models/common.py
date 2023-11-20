@@ -17,6 +17,7 @@ from src.models.feature_extractor.panns import PANNsFeatureExtractor
 from src.models.feature_extractor.spectrogram import SpecFeatureExtractor
 from src.models.spec1D import Spec1D
 from src.models.spec2Dcnn import Spec2DCNN
+from src.models.transformerautomodel import TransformerAutoModel
 
 FEATURE_EXTRACTOR_TYPE = Union[
     CNNSpectrogram, PANNsFeatureExtractor, LSTMFeatureExtractor, SpecFeatureExtractor
@@ -76,7 +77,11 @@ def get_decoder(
             **cfg.params,
         )
     elif cfg.name == "MLPDecoder":
-        decoder = MLPDecoder(n_channels=n_channels, n_classes=n_classes)
+        decoder = MLPDecoder(
+            n_channels=n_channels, 
+            n_classes=n_classes,
+            **cfg.params,
+    )
     elif cfg.name == "TransformerCNNDecoder":
         decoder = TransformerCNNDecoder(
             input_size=n_channels,
@@ -152,6 +157,15 @@ def get_model(
             feature_extractor=feature_extractor,
             decoder=decoder,
             in_channels=feature_extractor.out_chans,
+            mixup_alpha=cfg.aug.mixup_alpha,
+            cutmix_alpha=cfg.aug.cutmix_alpha,
+            **cfg.model.params,
+        )
+    elif cfg.model.name == "TransformerAutoModel":
+        model = TransformerAutoModel(
+            n_channels=feature_dim,
+            n_classes=n_classes,
+            out_size=num_timesteps,
             mixup_alpha=cfg.aug.mixup_alpha,
             cutmix_alpha=cfg.aug.cutmix_alpha,
             **cfg.model.params,
