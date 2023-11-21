@@ -30,12 +30,17 @@ FEATURE_NAMES = [
     "minute_cos",
     "anglez_sin",
     "anglez_cos",
-    "hour_2_sin_2",
-    "hour_2_cos_2",
-    "month_2_sin_2",
-    "month_2_cos_2",
-    "minute_2_sin_2",
-    "minute_2_cos_2",
+    "anglez_week_ago",
+    "enmo_week_ago",
+    "step_week_ago",
+    "hour_sin_week_ago",
+    "hour_cos_week_ago",
+    "month_sin_week_ago",
+    "month_cos_week_ago",
+    "minute_sin_week_ago",
+    "minute_cos_week_ago",
+    "anglez_sin_week_ago",
+    "anglez_cos_week_ago",
 ]
 
 ANGLEZ_MEAN = -8.810476
@@ -98,6 +103,17 @@ def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
         cos_series.alias("season_cos")
     ])
 
+def add_weekly_shift(series_df: pl.DataFrame) -> pl.DataFrame:
+    # 1週間前のデータをシフトする
+    week_shifted_df = series_df.shift_and_fill(-7*24*60, fill_value=0)  # 7日*24時間*60分
+
+    # 新しい列名を付ける
+    shifted_columns = [f"{col}_week_ago" for col in FEATURE_NAMES]
+    week_shifted_df.columns = shifted_columns
+
+    # 元のデータフレームに結合
+    return series_df.join(week_shifted_df)
+
 def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
     series_df = (
         series_df.with_row_count("step")
@@ -105,9 +121,6 @@ def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
             *to_coord(pl.col("timestamp").dt.hour(), 24, "hour"),
             *to_coord(pl.col("timestamp").dt.month(), 12, "month"),
             *to_coord(pl.col("timestamp").dt.minute(), 60, "minute"),
-            *to_coord_2(pl.col("timestamp").dt.hour(), 24, "hour_2"),
-            *to_coord_2(pl.col("timestamp").dt.month(), 12, "month_2"),
-            *to_coord_2(pl.col("timestamp").dt.minute(), 60, "minute_2"),
             pl.col("step") / pl.count("step"),
             pl.col('anglez_rad').sin().alias('anglez_sin'),
             pl.col('anglez_rad').cos().alias('anglez_cos'),
@@ -176,7 +189,7 @@ def main(cfg: PrepareDataConfig):
         for series_id, this_series_df in tqdm(series_df.group_by("series_id"), total=n_unique):
             # 特徴量を追加
             this_series_df = add_feature(this_series_df)
-
+            this_series_df = add_weekly_shift(this_series_df)
             # 特徴量をそれぞれnpyで保存
             series_dir = processed_dir / series_id  # type: ignore
             save_each_series(this_series_df, FEATURE_NAMES, series_dir)
