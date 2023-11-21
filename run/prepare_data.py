@@ -30,6 +30,8 @@ FEATURE_NAMES = [
     "minute_cos",
     "anglez_sin",
     "anglez_cos",
+]
+"""
     "anglez_week_ago",
     "enmo_week_ago",
     "step_week_ago",
@@ -41,8 +43,7 @@ FEATURE_NAMES = [
     "minute_cos_week_ago",
     "anglez_sin_week_ago",
     "anglez_cos_week_ago",
-]
-
+"""
 ANGLEZ_MEAN = -8.810476
 ANGLEZ_STD = 35.521877
 ENMO_MEAN = 0.041315
