@@ -106,7 +106,7 @@ def add_seasonal_features(series_df: pl.DataFrame) -> pl.DataFrame:
 
 def add_weekly_shift(series_df: pl.DataFrame) -> pl.DataFrame:
     # 1週間前のデータをシフトする
-    week_shifted_df = series_df.shift(-7*24*60, fill_value=0)  # 7日*24時間*60分
+    week_shifted_df = series_df.shift(-7*24*60)  # 7日*24時間*60分
 
     # 新しい列名を付ける
     shifted_columns = [f"{col}_week_ago" for col in FEATURE_NAMES]
