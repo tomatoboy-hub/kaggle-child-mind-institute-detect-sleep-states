@@ -190,7 +190,6 @@ def main(cfg: PrepareDataConfig):
         for series_id, this_series_df in tqdm(series_df.group_by("series_id"), total=n_unique):
             # 特徴量を追加
             this_series_df = add_feature(this_series_df)
-            this_series_df = add_weekly_shift(this_series_df)
             # 特徴量をそれぞれnpyで保存
             series_dir = processed_dir / series_id  # type: ignore
             save_each_series(this_series_df, FEATURE_NAMES, series_dir)

@@ -71,8 +71,6 @@ features:
   #- "season_cos"  # 季節の余弦特徴量
   #- "hour_2_sin_2"
   #- "hour_2_cos_2"
-  - "anglez_week_ago",
-  - "enmo_week_ago",
   #- "step_week_ago",
   #- "hour_sin_week_ago",
   #- "hour_cos_week_ago",
@@ -80,8 +78,6 @@ features:
   #- "month_cos_week_ago",
   #- "minute_sin_week_ago",
   #- "minute_cos_week_ago",
-  - "anglez_sin_week_ago",
-  - "anglez_cos_week_ago",
 
 # optimizer
 optimizer:
